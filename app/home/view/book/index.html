@@ -1,0 +1,52 @@
+{extend name="common/base"/}
+{block name="meta"}
+<link rel="mobile-prefetch" href="/mobile/index" />
+{/block}
+{block name="title"}
+<title>{$seo.title}</title>
+{/block}
+{block name="keywords"}
+<meta name="keywords" content="{$seo.keywords}" />
+<meta name="description" content="{$seo.desc}" />
+{/block}
+
+<!-- 主体 -->
+{block name="body"}
+{include file="common/header" nav='index' /}
+<div class="blog-map">
+	您的当前位置：<a href="/">首页</a><span>&gt;</span><a href="/home/book/index.html">全部文档</a>
+</div>
+<div class="blog-content clearfix">
+	<ul class="doc-list">
+		{volist name="$list" id="vo"}
+		<li>
+			<a class="doc-img" href="/home/book/detail/bid/{$vo.id}.html" title="{$vo.title}" target="_blank">
+				<img src="{$vo.thumb}" alt="{$vo.title}">
+			</a>
+			<div class="doc-title">
+				<div class="doc-title-text">
+					<h3><a class="doc-img" href="/home/book/detail/bid/{$vo.id}.html" title="{$vo.title}" target="_blank">{$vo.title}</a></h3>
+					<p>发布时间：<time>{$vo.create_time}</time>文档数：<time>{$vo.docs}</time>阅览数：<time>{$vo.view}</time></p>
+				</div>
+			</div>
+			<div class="doc-desc">{$vo.desc}</div>
+			<div class="doc-view"><a href="/home/book/detail/bid/{$vo.id}.html" target="_blank">进入阅读</a></div>
+		</li>
+		{/volist}
+	</ul>
+	{notempty name="$page"}
+	<div class="pagebox">
+		{$page|raw}
+	</div>
+	{/notempty}
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+
+</script>
+{/block}
+<!-- /脚本 -->

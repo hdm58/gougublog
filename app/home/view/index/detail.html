@@ -1,0 +1,100 @@
+{extend name="common/base"/}
+{block name="style"}
+<link rel="stylesheet" href="{__STATIC__}/prism/prism.css?v=1"/>
+<link rel="stylesheet" href="{__JS__}/viewer/viewer.min.css?v=1"/>
+{/block}
+{block name="meta"}
+<link rel="mobile-prefetch" href="/mobile/index" />
+{/block}
+{block name="title"}
+<title>{$seo.title}</title>
+{/block}
+{block name="keywords"}
+<meta name="keywords" content="{$seo.keywords}" />
+<meta name="description" content="{$seo.desc}" />
+{/block}
+
+<!-- 主体 -->
+{block name="body"}
+{include file="common/header" nav='index' /}
+<div class="blog-map">
+	您的当前位置：<a href="/">首页</a><span>&gt;</span><a href="/home/article/cate.html">全部文章</a><span>&gt;</span>文章详情
+</div>
+<div class="blog-content clearfix">
+	<div class="l blog-left">
+		<div class="blog-detail">
+			<h1 class="blog-detail-title">
+				{$detail.title}
+			</h1>
+			<div class="blog-detial-ops">
+				{$detail.origin}<span>发表于：{:date('Y-m-d H:i:s',$detail.create_time)}</span><span>浏览：{$detail.read}次</span><span class="color-tags">TAG：{foreach name='$detail.keyword_array' item='vo'}
+					<a href="/home/article/tags/id/{$vo.keywords_id}.html" title="{$vo.title}">#{$vo.title}</a>
+				{/foreach}</span>
+			</div>
+			<div id="blogDetial" class="blog-detial-content">
+				{$detail.content|raw}
+			</div>
+		</div>
+	</div>
+	<div class="r blog-right">
+		<div class="r blog-right">
+			{include file="common/blogright" /}
+		</div>
+	</div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script src="{__STATIC__}/prism/prism.js?v=1"></script>
+<script type="text/javascript" src="{__JS__}/viewer/viewer.min.js?v=1"></script>
+<script>
+	function unhtml(str, reg) {
+        return str ? str.replace(reg || /[&<">'](?:(amp|lt|quot|gt|#39|nbsp|#\d+);)?/g, function (a, b) {
+            if (b) {
+                return a;
+            } else {
+                return {
+                    '<':'&lt;',
+                    '&':'&amp;',
+                    '"':'&quot;',
+                    '>':'&gt;',
+                    "'":'&#39;'
+                }[a]
+            }
+
+        }) : '';
+    }
+    var $codepre = $("pre[class]");
+	if($codepre.length>0){
+		for(var i = 0;i<$codepre.length;i++){
+			var item = $codepre.eq(i);
+			var language = "";
+			item.attr("class").replace(/brush:([^;]+)/,function(a,b){
+				language = b;
+			});
+			if(language){
+				var codehtml = item.html();
+				var code = $("<code>");
+				code.attr("class","language-"+language+" line-numbers");
+				//codehtml= unhtml(codehtml);
+				code.html(codehtml);
+				item.html(code);
+				Prism.highlightElement(code[0]);
+			}
+		}
+	}
+	
+	var $code=$("code[class]");
+	if($code.length>0){
+		for(var i = 0;i<$code.length;i++){
+			var item = $code.eq(i);
+			item.addClass("line-numbers");
+			//Prism.highlightElement(item);
+		}
+	}
+	var viewer = new Viewer(document.getElementById('blogDetial'));
+</script>
+{/block}
+<!-- /脚本 -->

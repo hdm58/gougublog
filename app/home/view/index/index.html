@@ -1,0 +1,223 @@
+{extend name="common/base"/}
+{block name="style"}
+<link rel="stylesheet" href="{__JS__}/swiper/swiper.min.css">
+{/block}
+{block name="js"}
+<script language="javascript" src="{__JS__}/swiper/swiper.min.js"></script>
+{/block}
+{block name="meta"}
+<link rel="mobile-prefetch" href="/mobile/index" />
+{/block}
+{block name="title"}
+<title>{$seo.title}</title>
+{/block}
+{block name="keywords"}
+<meta name="keywords" content="{$seo.keywords}" />
+<meta name="description" content="{$seo.desc}" />
+{/block}
+
+<!-- 主体 -->
+{block name="body"}
+{include file="common/header" nav='index' /}
+<div class="blog-content clearfix">
+	<div class="l blog-left">
+		<div class="blog-search">
+			<input type="text" id="searchKey" value="" class="search-key" placeholder="请输入关键字" /><input type="button" id="searchBtn"
+			 value="搜索文章" class="search-btn" />
+			<div class="blog-keywords">
+				大家都在搜：
+				{foreach name='search_keywords' item='vo'}
+					<a href="/home/article/search?k={$vo.title}">{$vo.title}</a>
+				{/foreach}
+			</div>
+		</div>
+		<div class="blog-banner">
+			<div class="blog-banner-box">
+				<div id="bannerSwiper" class="swiper-container">
+					<div class="swiper-wrapper">
+						{foreach name='slide' item='vo'}
+					  		<div class="swiper-slide">
+								<a href="{$vo.src}" target="_blank"><img src="{$vo.filepath}" width="788" height="236" alt="{$vo.title}"></a>
+							</div>
+					  	{/foreach}
+					</div>
+					<div class="pagination"></div>
+				</div>
+				<script>
+					var bannerSwiper = new Swiper('#bannerSwiper', {
+						speed: 500,
+						autoplay: {
+							delay: 6000, //6秒切换一次
+							disableOnInteraction: false
+						},
+						effect: 'fade',
+						fadeEffect: {
+							crossFade: true,
+						},
+						loop: true,
+						pagination: {
+							el: '.pagination',
+							clickable: true,
+						},
+					})
+				</script>
+			</div>
+			<div class="blog-banner-tags color-tags">
+				<h3>热门标签</h3>
+				{foreach name='hot_tag' item='vo'}
+				<a href="/home/article/tags/id/{$vo.id}.html" title="{$vo.title}">#{$vo.title}</a>
+				{/foreach}
+			</div>
+		</div>
+		<div class="blog-book clearfix">
+			<h3>知识库</h3>
+			<ul>
+				{volist name="$book" id="vo"}
+					<li><a href="/home/book/detail/bid/{$vo.id}.html" title="{$vo.title}"><img src="{$vo.thumb}" alt="{$vo.title}" /></a></li>
+				{/volist}
+			</ul>
+		</div>
+		<div class="blog-list">
+			<h3>博客文章</h3>
+			<div class="atr-list">
+				{foreach name='article' item='vo'}
+				<dl class="clearfix {eq name='$vo.thumb' value='0'} noneimg{/eq}">
+					<dt>{gt name='$vo.thumb' value='0'}<a href="/home/article/detail/id/{$vo.id}.html"><img src="{$vo.filepath}" alt="{$vo['title']}" /></a>{/gt}</dt>
+					<dd class="atr-list-title text-overflow-1">
+						<a href="/home/article/detail/id/{$vo.id}.html">{$vo.title}</a>
+					</dd>
+					<dd class="atr-list-info"><a href="/home/article/detail/id/{$vo.id}.html">{$vo.desc}</a></dd>
+					<dd class="atr-list-tags">
+						<span>发表于：{:date('Y-m-d',$vo.create_time)}</span>
+						<span>浏览：{$vo.read}</span>
+						<span class="color-tags">TAG：{foreach name='$vo.keyword_array' item='vo'}
+							<a href="/home/article/tags/id/{$vo.id}.html" title="{$vo.title}">#{$vo.title}</a>
+						{/foreach}</span>
+					</dd>				
+				</dl>
+				{/foreach}
+			</div>
+		</div>
+		<div class="blog-soft">
+			<h3>推荐软件</h3>
+			<div class="blog-soft-list clearfix">
+				敬请期待
+			</div>
+		</div>
+	</div>
+	<div class="r blog-right">
+		<div class="blog-about">
+			<div class="blog-about-bg">
+				<img src="{__IMG__}/about_bg.jpg" alt="">
+			</div>
+			<div class="blog-about-info">
+				<div class="avatar">
+					<img src="{$counts.avatar}" alt="">
+				</div>
+				<div class="blog-about-title">
+					<p>{:get_system_config('web','admin_title')}</p>
+				</div>
+			</div>
+			<ul class="blog-about-num">
+				<li>
+					<p>文章数量</p>
+					<span>{$counts.article}</span>
+				</li>
+				<li>
+					<p>访客行为</p>
+					<span>{$counts.action}</span>
+				</li>
+				<li>
+					<p>运行天数</p>
+					<span>{$counts.days+1}</span>
+				</li>
+			</ul>
+		</div>
+		<div class="blog-cate">
+			<div class="blog-title">栏目分类<a href="/home/article/cate.html">全部></a></div>
+			<div class="blog-cate-li">
+				<ul>
+					{foreach name="cates" item="vo"}
+					<li><a href="/home/article/cate/id/{$vo.id}.html">{$vo.title}<span>{$vo.count}</span></a></li>
+					{/foreach}
+				</ul>
+			</div>
+		</div>
+		<div class="blog-ad">
+			<img src="{__IMG__}/gitee.jpg" alt="勾股博客开源的博客系统"/>
+			<div class="gitee-ops">
+				<div class="gitee-download">
+					<a href="https://blog.gougucms.com/home/index/down.html" target="_blank">立即下载</a>
+				</div>
+				<div class="gitee-tips">勾股博客，免费开源！
+					<a href="https://gitee.com/gougucms/blog" target="_blank" class="site-fork">gitee</a>
+				</div>
+				<div class="gitee-version">
+					<span>当前版本：<i>{$version}</i></span>
+					<span><a href="https://blog.gougucms.com/home/index/logs.html" target="_blank">更新日志</a></span>
+					<span>下载量：<i>{$counts.download}</i></span>
+				</div>
+			</div>
+		</div>
+		<div class="blog-action">
+			<div class="blog-title">博主动态<a href="/home/action/index.html">更多></a></div>
+			<div class="blog-timeline">
+				{foreach name='action' item='vo'}
+					<dl>
+						<dt><span class="date-second-point"></span>{:date('Y-m-d H:i:s',$vo.create_time)}</dt>
+						<dd>{:nl2br($vo.content)}</dd>
+					</dl>
+				{/foreach}
+			</div>
+		</div>
+		<div class="blog-tags">
+			<div class="blog-title">标签云</div>
+			{foreach name='tags' item='vo'}
+				<a class="blog-tags-a" href="/home/article/tags/id/{$vo.id}.html"><span>#{$vo.title}</span></a>
+			{/foreach}
+		</div>
+		<div class="blog-hot">
+			<div class="blog-title" style="color:#F7630C">🔥热门博文</div>
+			<ul>
+				{foreach name="hot_articles" item="vo" key="k"}
+				<li class="text-overflow-1"><span>{$k+1}</span><a href="/home/article/detail/id/{$vo.id}.html">{$vo.title}</a></li>
+				{/foreach}
+			</ul>
+		</div>
+		<div class="blog-links">
+			<div class="blog-title">友情链接</div>
+			<div class="blog-links-li">
+				<ul>
+					{foreach name="links" item="vo"}
+					<li><a href="{$vo.src}" {eq name='$vo.target' value='1'} target="_blank"{/eq}>{$vo.name}</a></li>
+					{/foreach}
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	//搜索
+	$('#searchBtn').on('click', function() {
+		var val = $('#searchKey').val();
+		if (val == '') {
+			layer.msg('请输入搜索关键字');
+			return;
+		}
+		window.location.href = "/home/article/search?k=" + val;
+	});
+	
+	$('#searchKey').on('keydown', function(e) {
+		var ev = e || window.event;
+		if (ev.keyCode == 13) {
+			$('#searchBtn').click();
+		}
+	});
+</script>
+{/block}
+<!-- /脚本 -->

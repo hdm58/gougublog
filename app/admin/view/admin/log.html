@@ -1,0 +1,102 @@
+{extend name="common/base"/}
+<!-- 主体 -->
+{block name="body"}
+<div class="body-content">
+	<form class="layui-form">
+		<div class="layui-input-inline" style="width:300px;">
+			<input type="text" name="keywords" placeholder="昵称/操作节点名称/操作数据ID" class="layui-input" autocomplete="off" />
+		</div>
+		<div class="layui-input-inline">
+			<select name="title_cate">
+				<option value="">请选择类型</option>
+				<option value="登录">登录操作</option>
+				<option value="上传">上传操作</option>
+				<option value="新增">新增操作</option>
+				<option value="编辑">编辑操作</option>
+				<option value="查看">查看操作</option>
+				<option value="删除">删除操作</option>
+			</select>
+		</div>
+		<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="webform">提交搜索</button>
+	</form>
+	<table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	function init(layui) {
+		var table = layui.table,
+			form = layui.form;
+
+		var tableIns = table.render({
+			elem: '#test',
+			title: '操作日志列表',
+			toolbar: '#toolbarDemo',
+			url: '/admin/admin/log', //数据接口	
+			page: true, //开启分页
+			limit: 20,
+			cols: [
+				[ //表头
+					{
+						field: 'id',
+						title: 'ID号',
+						align: 'center',
+						width: 90
+					}, {
+						field: 'title',
+						title: '操作',
+						width: 150
+					}, {
+						field: 'content',
+						title: '操作描述',
+						width: 348
+					}, {
+						field: 'param_id',
+						title: '操作数据ID',
+						align: 'center',
+						width: 100
+					}, {
+						field: 'param',
+						title: '操作数据'
+					}, {
+						field: 'nickname',
+						title: '操作用户',
+						align: 'center',
+						width: 100
+					}, {
+						field: 'ip',
+						title: 'IP地址',
+						align: 'center',
+						width: 150
+					}, {
+						field: 'create_time',
+						title: '操作时间',
+						fixed: 'right',
+						align: 'center',
+						width: 160
+					}
+				]
+			]
+		});
+
+		//监听搜索提交
+		form.on('submit(webform)', function (data) {
+			tableIns.reload({
+				where: {
+					keywords: data.field.keywords,
+					title_cate: data.field.title_cate
+				},
+				page: {
+					curr: 1
+				}
+			});
+			return false;
+		});
+	}
+</script>
+{include file="common/layui" base='base' extend="[]" callback="init" /}
+{/block}
+<!-- /脚本 -->

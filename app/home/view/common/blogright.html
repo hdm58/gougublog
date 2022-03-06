@@ -1,0 +1,49 @@
+<div class="blog-min-search">
+	<input type="text" id="searchKey" value="" class="search-key" placeholder="请输入关键字" /><input type="button" id="searchBtn"
+	 value="搜索" class="search-btn" />
+</div>
+<div class="blog-cate">
+	<div class="blog-title">栏目分类<a href="/home/article/cate.html">全部></a></div>
+	<div class="blog-cate-li">
+		<ul>
+			{foreach name="cates" item="vo"}
+			<li><a href="/home/article/cate/id/{$vo.id}.html">{$vo.title}<span>{$vo.count}</span></a></li>
+			{/foreach}
+		</ul>
+	</div>
+</div>
+<div class="blog-ad">
+	<a href="https://gitee.com/gougucms/blog" target="_blank"><img src="{__IMG__}/blog.jpg" alt="勾股博客开源"/></a>
+</div>
+<div class="blog-tags">
+	<div class="blog-title">标签云</div>
+	{foreach name='tags' item='vo'}
+		<a class="blog-tags-a" href="/home/article/tags/id/{$vo.id}.html"><span>#{$vo.title}</span></a>
+	{/foreach}
+</div>
+<div class="blog-random">
+	<div class="blog-title">推荐文章</div>
+	<ul>
+		{foreach name="hot_articles" item="vo"}
+		<li class="text-overflow-1"><a href="/home/article/detail/id/{$vo.id}.html">{$vo.title}</a></li>
+		{/foreach}
+	</ul>
+</div>
+<script>
+	//搜索
+	$('#searchBtn').on('click', function() {
+		var val = $('#searchKey').val();
+		if (val == '') {
+			layer.msg('请输入搜索关键字');
+			return;
+		}
+		window.location.href = "/home/article/search?k=" + val;
+	});
+	
+	$('#searchKey').on('keydown', function(e) {
+		var ev = e || window.event;
+		if (ev.keyCode == 13) {
+			$('#searchBtn').click();
+		}
+	});
+</script>

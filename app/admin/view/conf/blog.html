@@ -1,0 +1,101 @@
+{extend name="common/base"/}
+<!-- 主体 -->
+{block name="body"}
+<form class="layui-form page-content">
+	<h3 style="height:36px">博客配置</h3>
+	<table class="layui-table layui-table-form">
+		<tr>
+			<td class="layui-td-gray2">博主称呼<font>*</font></td>
+			<td>
+				<input type="hidden" value="{$id}" name="id">
+				<input type="text" name="title" autocomplete="off" placeholder="请输入博主称呼"
+				lay-verify="required" lay-reqText="请输入博主称呼" class="layui-input"{notempty name="$config.title"} value="{$config.title}" {/notempty}>
+			</td>
+			<td class="layui-td-gray2">开博时间<font>*</font></td>
+			<td>
+				<input type="text" id="create_time" name="create_time" autocomplete="off" readonly placeholder="请选择开博时间" lay-verify="required" lay-reqText="请选择开博时间" class="layui-input" {notempty name="$config.create_time"} value="{$config.create_time}" {/notempty}>
+			</td>
+			<td rowspan="3" class="layui-td-gray2">博主头像<font>*</font></td>
+			<td rowspan="3" style="width: 150px;">
+				<div class="layui-upload" style="width: 150px;">
+					<div class="layui-upload-list" id="demo1" style="width: 100%; height:150px; overflow: hidden;">
+						<img src='{notempty name="$config.avatar"}{$config.avatar}{/notempty}' style="width: 150px; height: 150px; max-width: 100%;" />
+						<input type="hidden" name="avatar" lay-verify="required" lay-reqText="请上传博主头像" {notempty name="$config.avatar"} value="{$config.avatar}" {/notempty}>
+					</div>
+					<button type="button" class="layui-btn layui-btn-normal" style="width: 100%;" id="test1">上传头像360x360</button>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray2">个性签名<font>*</font></td>
+			<td colspan="3">
+				<input type="text" name="signature" autocomplete="off" placeholder="请输入个性签名，最好30字以内。"
+				lay-verify="required" lay-reqText="请输入个性签名" class="layui-input"{notempty name="$config.signature"} value="{$config.signature}" {/notempty}>
+			</td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray2">博客简介</td>
+			<td colspan="3">
+				<textarea name="desc" placeholder="请输入博客简介" class="layui-textarea">{notempty name="$config.desc"}{$config.desc}{/notempty}</textarea>
+			</td>
+		</tr>
+	</table>
+	<div style="padding: 10px 0">
+		<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="webform">立即提交</button>
+		<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+	</div>
+</form>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	function init(layui) {
+		var form = layui.form,
+		upload = layui.upload,
+		laydate = layui.laydate,
+		layer = layui.layer;
+
+		laydate.render({
+			elem: '#create_time',
+			type: 'date',
+			format: 'yyyy-MM-dd'
+		});
+		//logo上传
+		var uploadInst = upload.render({
+			elem: '#test1',
+			url: '/admin/api/upload',
+			done: function (e) {
+				//如果上传失败
+				if (e.code == 1) {
+					return layer.msg('上传失败');
+				}
+				//上传成功
+				layer.msg('上传成功');
+				$('#demo1 input').attr('value', e.data.filepath);
+				$('#demo1 img').attr('src', e.data.filepath);
+			}
+		});
+		//监听提交
+		form.on('submit(webform)', function (data) {
+			$.ajax({
+				url: "/admin/conf/edit",
+				type: 'post',
+				data: data.field,
+				success: function (e) {
+					layer.msg(e.msg);
+					if (e.code == 0) {
+						setTimeout(function(){
+							parent.layui.rightpage.close();
+						},1000);
+					}
+				}
+			})
+			return false;
+		});
+	}
+</script>
+{include file="common/layui" base='base' extend="[]" callback="init" /}
+{/block}
+<!-- /脚本 -->

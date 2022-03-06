@@ -1,0 +1,225 @@
+{extend name="common/base"/}
+{block name="style"}
+<link rel="stylesheet" href="{__STATIC__}/mdeditor/css/editormd.preview.min.css?v=1.0.2">
+<link rel="stylesheet" href="{__STATIC__}/prism/prism.css?v=1"/>
+<link rel="stylesheet" href="{__JS__}/viewer/viewer.min.css?v=1"/>
+<link rel="stylesheet" href="{__JS__}/ztree/css/metroStyle/metroStyle.css" >
+<style>
+.editormd-html-preview, .editormd-preview-container{font-size:16px; line-height:1.72;}
+.editormd-html-preview code, .editormd-preview-container code {padding:2px; border-radius:2px; font-size:14px; font-family:SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+.editormd-html-preview, .editormd-preview-container .code-toolbar{font-size:14px;}
+.editormd-preview li {list-style: initial;}
+.editormd-html-preview pre, .editormd-preview-container pre{border: 1px solid #f6f6f6; font-size:14px;}
+</style>
+{/block}
+{block name="meta"}
+<link rel="mobile-prefetch" href="/mobile/index" />
+{/block}
+{block name="title"}
+<title>{$seo.title}</title>
+{/block}
+{block name="keywords"}
+<meta name="keywords" content="{$seo.title}" />
+<meta name="description" content="{$seo.desc}" />
+{/block}
+
+<!-- 主体 -->
+{block name="body"}
+{include file="common/header" nav='index' /}
+<div class="content">
+	{empty name="$info"}
+	<div style="padding:200px 0 0; width:100%; min-height:500px; text-align:center; font-size:30px; color:#999">暂无文档内容</div>
+	{else/}
+	<div class="content-chapter">
+		<h3>{$detail['title']}</h3>
+		<ul id="treeDemo" class="ztree"></ul>
+		<ul id="chapterItem" class="sidebar-links sidebar-a" style="display:none">
+			{volist name="$menu" id="a" key="k"}
+				<li>				
+					{if condition="$a.type == 1"}
+						<a href="/home/book/detail/bid/{$bid}/id/{$a.id}" data-dep="1" data-id="{$a.id}" data-type="{$a.type}" class="sidebar-link {eq name='$a.id' value='$id'}active{/eq}">{$a.title}</a>
+					{elseif condition="$a.type == 2"}
+						<a href="javascript:;" data-dep="1" data-id="{$a.id}" data-type="{$a.type}" class="sidebar-link">{$a.title}</a>
+					{elseif condition="$a.type == 3"}
+						<a href="{$a.link}" data-dep="1" data-id="{$a.id}" data-type="{$a.type}" class="sidebar-link">{$a.title}</a>
+					{/if}
+					{notempty name="$a.list"}
+					<ul class="sidebar-links sidebar-b">
+						{volist name="$a.list" id="b"}
+							<li>
+								{if condition="$b.type == 1"}
+									<a href="/home/book/detail/bid/{$bid}/id/{$b.id}" data-dep="2" data-id="{$b.id}" data-type="{$b.type}" class="sidebar-link {eq name='$b.id' value='$id'}active{/eq}">{$b.title}</a>
+								{elseif condition="$b.type == 2"}
+									<a href="javascript:;" data-dep="2" data-id="{$b.id}" data-type="{$b.type}" class="sidebar-link">{$b.title}</a>
+								{elseif condition="$b.type == 3"}
+									<a href="{$b.link}" data-dep="2" data-id="{$b.id}" data-type="{$b.type}" target="_blank" class="sidebar-link">{$b.title}</a>
+								{/if}
+								{notempty name="$b.list"}
+									<ul class="sidebar-links sidebar-c">
+									{volist name="$b.list" id="c"}
+										<li class="sidebar-sub-header">
+											{if condition="$c.type == 1"}
+												<a href="/home/book/detail/bid/{$bid}/id/{$c.id}" data-dep="3" data-id="{$c.id}" data-type="{$c.type}" class="sidebar-link {eq name='$c.id' value='$id'}active{/eq}">{$c.title}</a>
+											{elseif condition="$c.type == 2"}
+												<a href="javascript:;" data-dep="3" data-id="{$c.id}" data-type="{$c.type}" class="sidebar-link">{$c.title}</a>
+											{elseif condition="$c.type == 3"}
+												<a href="{$c.link}" data-dep="3" data-id="{$c.id}" data-type="{$c.type}"  target="_blank" class="sidebar-link">{$c.title}</a>
+											{/if}
+											{notempty name="$c.list"}
+												<ul class="sidebar-links sidebar-d">
+												{volist name="$c.list" id="d"}
+													<li>{if condition="$d.type == 1"}
+															<a href="/home/book/detail/bid/{$bid}/id/{$d.id}" data-dep="4" data-id="{$d.id}" data-type="{$d.type}" class="sidebar-link {eq name='$d.id' value='$id'}active{/eq}">{$d.title}</a>
+														{elseif condition="$d.type == 2"}
+															<a href="javascript:;" data-dep="4" data-id="{$d.id}" data-type="{$d.type}" class="sidebar-link">{$d.title}</a>
+														{elseif condition="$d.type == 3"}
+															<a href="{$d.link}" data-dep="4" data-id="{$d.id}" data-type="{$d.type}"  target="_blank" class="sidebar-link">{$d.title}</a>
+														{/if}
+													</li>
+												{/volist}	
+												</ul>
+											{/notempty}
+										</li>
+									{/volist}	
+									</ul>
+								{/notempty}
+							</li>
+						{/volist}	
+					</ul>
+					{/notempty}
+				</li>					
+			{/volist}					
+		</ul>
+	</div>
+	<div class="content-text">
+		<div class="content-text-div">
+			<div class="article-content">
+				<div class="article-content-title"><h1 id="infoTilte">{$info.title}</h1></div>
+				<div class="editormd-preview">
+					<div class="markdown-body editormd-preview-container" id="infoContent">
+						{$info.content|raw}
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content-catalog">
+		
+		</div>
+	</div>
+	{/empty}
+</div>
+{/block}
+<!-- /主体 -->
+{block name="footer"}{/block}
+<!-- 脚本 -->
+{block name="script"}
+<script src="{__JS__}/ztree/js/jquery.ztree.all.min.js?v=1"></script>
+<script type="text/javascript" src="{__JS__}/viewer/viewer.min.js?v=1"></script>
+<script src="{__STATIC__}/prism/prism.js?v=1"></script>
+<script>
+var bid='{$bid}';
+var did='{$id}';
+var treeObj = null;
+var zNodes =[
+	{ id:1, pId:0, name:"勾股文档", open:true}
+];
+
+var setting = {
+	data: {
+		simpleData: {
+			enable: true
+		}
+	},
+	callback: {
+		onClick: zTreeOnClick
+	}
+};
+function zTreeOnClick(event, treeId, treeNode) {
+	let type=treeNode.type;
+	let id=treeNode.id;
+	if(type==1){
+		detail(id);
+	}
+	if(type == 2){
+		treeObj.expandNode(treeNode, !treeNode.open, false, true);
+	}
+};
+
+$(function(){
+	$.ajax({
+		url: "/home/book/list",
+		type: 'post',
+		data: {bid:bid},
+		success: function (e) {
+			if (e.code == 0) {
+				zNodes = e.data;
+				treeObj = $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+				if(did>0){
+					var node = treeObj.getNodeByParam("id", did, null);
+					treeObj.selectNode(node);
+				}
+			} else {
+				layer.msg(e.msg);
+			}
+		}
+	})
+});
+
+
+$('#chapterItem').on('click','.sidebar-link',function(evt){
+	let dep=$(this).data('dep');
+	let type=$(this).data('type');
+	let id=$(this).data('id');
+	if(type!=3){
+		evt.preventDefault();
+		$('.sidebar-link').removeClass('active');
+
+		if(dep>2){
+			$(this).parent().parent().prev().addClass('active');
+		}
+		$(this).addClass('active');
+		if(type==1){
+			detail(id);
+		}
+	}
+})
+var viewer = new Viewer(document.getElementById('infoContent'));
+function detail(id){
+	viewer.destroy();
+	$.ajax({
+		url: "/home/book/detail",
+		type: 'post',
+		data: {id:id},
+		success: function (e) {
+			if (e.code == 0) {
+				console.log(e.data);
+				history.pushState({},e.data.title,window.location.protocol+'//'+window.location.host+'/home/book/detail/bid/'+bid+'/id/'+id+'.html');
+				$('#infoTilte').html(e.data.title);
+				$('#infoContent').html(e.data.content);				
+				document.body.scrollTop=document.documentElement.scrollTop=0
+				var $codepre = $('#infoContent').find("code[class]");
+				if($codepre.length>0){
+					for(var i = 0;i<$codepre.length;i++){
+						var item = $codepre.eq(i).parent();
+						item.addClass("line-numbers").addClass('lang-javascript');
+					}
+					Prism.highlightAll();
+				}
+				viewer = new Viewer(document.getElementById('infoContent'));
+			} else {
+				layer.msg(e.msg);
+			}
+		}
+	})
+}
+
+var $codepre = $("code[class]");
+if($codepre.length>0){
+	for(var i = 0;i<$codepre.length;i++){
+		var item = $codepre.eq(i).parent();
+		item.addClass("line-numbers");
+	}
+}
+</script>
+{/block}
+<!-- /脚本 -->

@@ -1,0 +1,73 @@
+{extend name="common/base"/}
+{block name="style"}{/block}
+{block name="meta"}
+<link rel="mobile-prefetch" href="/mobile/index" />
+{/block}
+{block name="title"}
+<title>{$seo.title}</title>
+{/block}
+{block name="keywords"}
+<meta name="keywords" content="{$seo.keywords}" />
+<meta name="description" content="{$seo.desc}" />
+{/block}
+
+<!-- 主体 -->
+{block name="body"}
+{include file="common/header" nav='index' /}
+<div class="blog-map">
+	您的当前位置：<a href="/">首页</a><span>&gt;</span><a href="/home/article/cate.html">全部文章</a>
+	{if condition="($seo.action == 'cate')"}
+	{gt name="$seo.cate_id" value="0"}<span>&gt;</span>{$seo.title}内的文章{/gt}
+	{elseif condition="($seo.action == 'tags')" /}
+	<span>&gt;</span>标签 {$seo.keywords} 关联的文章
+	{elseif condition="($seo.action == 'search')" /}
+	<span>&gt;</span>搜索词 {$seo.keywords} 关联的文章
+	{else /}
+	<span>&gt;</span>内容
+	{/if}
+</div>
+<div class="blog-content clearfix">
+	<div class="l blog-left">
+		<div class="cate-list">
+			<div class="atr-list">
+				{empty name="article"}
+				<div class="list-data-none">
+					<img src="{__IMG__}/none.jpg" alt="暂无数据" />
+				</div>				
+				{/empty}
+				{foreach name='article' item='vo'}
+				<dl class="clearfix {eq name='$vo.thumb' value='0'} noneimg{/eq}">
+					<dt>{gt name='$vo.thumb' value='0'}<a href="/home/article/detail/id/{$vo.id}.html"><img src="{$vo.filepath}" alt="{$vo['title']}" /></a>{/gt}</dt>
+					<dd class="atr-list-title text-overflow-1">
+						<a href="/home/article/detail/id/{$vo.id}.html">{$vo.title}</a>
+					</dd>
+					<dd class="atr-list-info"><a href="/home/article/detail/id/{$vo.id}.html">{$vo.desc}</a></dd>
+					<dd class="atr-list-tags">
+						<span>发表于：{:date('Y-m-d',$vo.create_time)}</span>
+						<span>浏览：{$vo.read}</span>
+						<span class="color-tags">TAG：{foreach name='$vo.keyword_array' item='vo'}
+							<a href="/home/article/tags/id/{$vo.id}.html" title="{$vo.title}">#{$vo.title}</a>
+						{/foreach}</span>
+					</dd>				
+				</dl>
+				{/foreach}
+			</div>
+			{notempty name="$page"}
+			<div class="pagebox">
+				{$page|raw}
+			</div>
+			{/notempty}
+		</div>
+	</div>
+	<div class="r blog-right">
+		<div class="r blog-right">
+			{include file="common/blogright" /}
+		</div>
+	</div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}{/block}
+<!-- /脚本 -->

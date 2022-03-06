@@ -1,0 +1,1 @@
+<?php return ['admin_title'=>'勾股CMS','title'=>'勾股cms','keywords'=>'123446','logo'=>'','desc'=>'234555','icp'=>'粤ICP备xxxxxxxxx号-1','code'=>'','domain'=>'123446','version'=>'1.2.0','port_cache_time'=>''];

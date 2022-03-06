@@ -1,0 +1,153 @@
+{extend name="common/base"/}
+<!-- 主体 -->
+{block name="body"}
+<div class="body-table">
+	<form class="layui-form layui-form-bar">
+		<div class="layui-input-inline" style="width:300px;">
+			<input type="text" name="keywords" placeholder="ID/名称" class="layui-input" />
+		</div>
+		<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="webform">提交搜索</button>
+	</form>
+	<table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+
+<script type="text/html" id="status">
+	<i class="layui-icon {{#  if(d.status == 1){ }}layui-icon-ok{{#  } else { }}layui-icon-close{{#  } }}"></i>
+</script>
+<script type="text/html" id="is_index">
+	<i class="layui-icon {{#  if(d.is_index == 1){ }}layui-icon-ok{{#  } else { }}layui-icon-close{{#  } }}"></i>
+</script>
+
+<script type="text/html" id="toolbarDemo">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-normal layui-btn-sm" lay-event="add">+ 添加知识库</button>
+  </div>
+</script>
+<script type="text/html" id="barDemo">
+<div class="layui-btn-group"><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><span class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">详情</span><a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a></div>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	var tableIns = null;
+	function init(layui) {
+		var TAB = parent.layui.tab,
+			table = layui.table,
+			rightpage = layui.rightpage,
+			form = layui.form;
+
+		tableIns = table.render({
+			elem: '#test',
+			title: '知识库列表',
+			toolbar: '#toolbarDemo',
+			url: '/admin/book/index', //数据接口
+			page: true, //开启分页
+			limit: 20,
+			cols: [
+				[ //表头
+					{
+						field: 'id',
+						title: '编号',
+						align: 'center',
+						width: 80
+					}, {
+						field: 'sort',
+						title: '排序',
+						align: 'center',
+						width: 80
+					},{
+						field: 'thumb',
+						title: '缩略图',
+						align: 'center',
+						width: 90,
+						templet: '<div><img src="{{d.thumb}}" style="width:30px;"></div>'
+					},{
+						field: 'title',
+						title: '标题'
+					},  {
+						field: 'count',
+						title: '文档数',
+						align: 'center',
+						width: 80
+					},{
+						field: 'status',
+						title: '首页显示',
+						toolbar: '#is_index',
+						align: 'center',
+						width: 80
+					},{
+						field: 'status',
+						title: '状态',
+						toolbar: '#status',
+						align: 'center',
+						width: 80
+					}, {
+						title: '操作',
+						toolbar: '#barDemo',
+						width: 136,
+						align: 'center'
+					}
+				]
+			]
+		});
+
+		//表头工具栏事件
+		table.on('toolbar(test)', function(obj){
+			if (obj.event === 'add') {
+				rightpage.open("/admin/book/add","900px");
+				return;
+			}
+		});
+
+		//监听行工具事件
+		table.on('tool(test)', function (obj) {
+			var data = obj.data;
+			if (obj.event === 'edit') {
+				rightpage.open('/admin/book/add?id='+obj.data.id,"900px");
+				return;
+			}
+			if (obj.event === 'view') {
+				TAB.sonAdd('/admin/book/view?id='+data.id,'知识库详情');
+				return;
+			}
+			if (obj.event === 'del') {
+				layer.confirm('确定要删除吗?', {
+					icon: 3,
+					title: '提示'
+				}, function(index) {
+					$.ajax({
+						url: "/admin/book/delete",
+						data: {
+							id: data.id
+						},
+						success: function(e) {
+							layer.msg(e.msg);
+							if (e.code == 0) {
+								obj.del();
+							}
+						}
+					})
+					layer.close(index);
+				});
+			}
+		});
+		//监听搜索提交
+		form.on('submit(webform)', function (data) {
+			tableIns.reload({
+				where: {
+					keywords: data.field.keywords
+				},
+				page: {
+					curr: 1
+				}
+			});
+			return false;
+		});
+	}
+</script>
+{include file="common/layui" base="base" extend="['rightpage']" callback="init" /}
+{/block}
+<!-- /脚本 -->

@@ -1,0 +1,256 @@
+{extend name="common/base"/}
+{block name="style"}
+  <style>
+	html,body{height: calc(100% - 10px);}
+	.layui-tree-set .layui-tree-txt.on,.layui-tree-set .layui-tree-txt.on:hover{font-weight:800; color:#1E9FFF}
+	.layui-tree-txt{display:inline-block; width:150px; overflow:hidden;}
+	.layui-tree-iconClick{margin-right:3px;}
+	.tree-left{width:280px; float:left; height:calc(100% - 30px); overflow-y: scroll; overflow-x: hidden; border:1px solid #ddd; background-color:#f8f8f8; padding:12px 10px 10px 5px;}
+	.tree-left h3{font-size:16px; height:30px; padding-left:10px; font-weight:800}
+	.editormd-code-toolbar select{display:inline;}
+	.editormd{margin-bottom:0}
+	.layui-table td{border-color:#ddd}
+	.editormd li{list-style: inherit;}
+  </style>
+{/block}
+<!-- 主体 -->
+{block name="body"}
+<div style="height: 100%">
+	<div class="tree-left">
+		<h3>知识库目录</h3>
+		<div id="tree"></div>
+	</div>
+	<div class="body-table" style="margin-left:300px; margin-bottom:0">
+		<form class="layui-form">
+			<table class="layui-table" style="margin-bottom:0;">
+			  <tr>
+				<td class="layui-td-gray">标题 <span style="color: red">*</span></td>
+				<td><input type="text" value="{$detail.title}" name="title" lay-verify="required" lay-reqText="请输入标题" autocomplete="off" placeholder="请输入标题" class="layui-input"></td>
+				<td class="layui-td-gray">排序<span style="color: red">*</span></td>
+				<td style="width:80px; text-align:center"><input type="text" name="sort" value="0" value="{$detail.sort}" placeholder="请输入排序，数字" autocomplete="off" class="layui-input"></td>
+				<td style="width:68px; text-align:center">
+					{eq name="$detail.type" value="1"}文档类型{/eq}
+					{eq name="$detail.type" value="2"}分组类型{/eq}
+					{eq name="$detail.type" value="3"}链接类型{/eq}
+				</td>
+				<td style="width:150px; text-align:center">
+					<input type="hidden" name="id" value="{$id}">
+					<div class="layui-btn-group">
+						<button class="layui-btn layui-btn-sm layui-btn-normal" lay-submit="" lay-filter="webform">提交保存</button>
+						<button lay-event="back" class="layui-btn layui-btn-sm layui-btn-primary">返回目录</button>
+					</div>
+				</td>
+				</tr>
+				{eq name="$detail.type" value="3"}
+				<tr>
+					<td class="layui-td-gray">跳转链接 <span style="color: red">*</span></td>
+					<td colspan="5">
+						<input type="text" value="{$detail.link}" name="link" lay-verify="required" lay-reqText="请输入标题" autocomplete="off" placeholder="请输入标题" class="layui-input">
+					</td>
+				</tr>
+				{/eq}
+			</table>
+			{eq name="$detail.type" value="1"}
+			<div style="margin-top:-2px; margin-right:2px">
+				<textarea id="mdContent" style="display:none;">{$detail.md_content|raw}</textarea>
+				<div id="docContent"></div>
+			</div>
+			{/eq}
+		</form>
+	</div>
+</div>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script src="{__STATIC__}/mdeditor/editormd.min.js"></script>
+<script>
+function init(layui) {
+    var form = layui.form,table = layui.table,tree = layui.tree,layer = layui.layer;
+	var doc_id = '{$detail.id}';
+	var book_id = '{$detail.book_id}';
+	$.ajax({
+		url:"{:url('admin/book/doc_tree')}",
+		data:{id:book_id},
+		type:'post',
+		success:function(res){					
+			//仅节点左侧图标控制收缩
+			var book = tree.render({
+				elem: '#tree',
+				data: res.trees,
+				spread: true,
+				id: 'book',
+				edit: ['add', 'del'], //操作节点的图标
+				onlyIconControl: true,  //是否仅允许节点左侧图标控制展开收缩
+				click: function(obj){
+					//layer.msg(JSON.stringify(obj.data));
+					window.location.href='/admin/book/doc_add?id='+obj.data.id;
+				},
+				operate: function(obj){
+					let type = obj.type; //得到操作类型：add、edit、del
+					let data = obj.data; //得到当前节点的数据
+					let elem = obj.elem; //得到当前节点元素					
+					if(type === 'add'){ //增加节点
+					  add(obj.data.id);
+					} else if(type === 'update'){ //修改节点
+					 // console.log(elem.find('.layui-tree-txt').html()); //得到修改后的内容
+					} else if(type === 'del'){ //删除节点
+						$.ajax({
+							url:"/admin/book/doc_delete",
+							type:'post',
+							data:{id:obj.data.id},
+							success:function(e){
+								layer.msg(e.msg);
+								setTimeout(function(){							
+									$('#tree').find('.layui-tree-txt').eq(0).click();
+								},1000)	
+							}
+						}) 
+					};
+				}
+			});	
+			setTimeout(function(){
+				$('[data-id="'+doc_id+'"]').find('.layui-tree-txt').eq(0).addClass('on');
+			},100)
+			
+		}
+	})
+	
+	//添加
+	var selectTable=null;
+	function add(pid) {
+		var type=[{'id':1,'title':'新建文档'},{'id':2,'title':'新建分组'},{'id':3,'title':'新建链接'}];
+		layer.open({
+			title:'选择类型',
+			type:1,
+			area:['360px','320px'],
+			content:'<div style="width:320px; padding:5px 15px"><div id="selectType"></div></div>',
+			success:function(){
+				selectTable=table.render({
+					elem: '#selectType',
+					cols: [[ //标题栏
+						{type:'radio',title: '选择'},
+						{field: 'title', title: '课程类型'}
+					]],
+					data: type
+				  });			
+			},
+			btn:['确定'],
+			btnAlign:'c',
+			yes: function(idx){
+				var checkStatus = table.checkStatus(selectTable.config.id);
+				var data = checkStatus.data;
+				if(data.length>0){
+					if(data[0].id==1 || data[0].id==2){
+						layer.prompt({title: '标题', formType: 3,value :''}, function(text, index){
+							if(text == ''){
+								layer.msg('输入标题');
+								return false;
+							}
+							$.ajax({
+								url:"/admin/book/doc_add",
+								data:{book_id:book_id,pid:pid,type:data[0].id,title:text},
+								success:function(e){
+									layer.closeAll();
+									layer.msg(e.msg);
+									if(e.code==0){
+										setTimeout(function(){							
+											window.location.href='/admin/book/doc_add?id='+e.data;
+										},1000)												
+									}
+								}
+							})									
+						})
+					}else if(data[0].id==3){
+						var content='<div style="padding:0 15px;"><table class="layui-table">\
+							<tr>\
+								<td class="layui-td-gray">链接标题 <span style="color: red">*</span></td>\
+								<td><input name="title" id="docTitle" class="layui-input" value="" placeholder="请输入标题"></td>\
+							</tr>\
+							<tr>\
+								<td class="layui-td-gray">URL链接 <span style="color: red">*</span></td>\
+								<td><input name="link" id="docLink" class="layui-input" value="" placeholder="请输入链接"></td>\
+							</tr>\
+						</table></div>';
+						layer.open({
+							type:1,
+							title:'新建链接',
+							area:['480px','300px'],
+							content:content,
+							success:function(){
+								
+							},
+							btn: ['确定提交'],
+							btnAlign:'c',
+							yes: function(idx){
+								let docTitle = $('#docTitle').val();
+								let docLink = $('#docLink').val();
+								if(docTitle==''){
+									layer.msg('请输入标题');
+									return;
+								}
+								if(docLink==''){
+									layer.msg('请输入链接');
+									return;
+								}
+								$.ajax({
+									url:"/admin/book/doc_add",
+									data:{book_id:book_id,pid:pid,type:data[0].id,title:docTitle,link:docLink},
+									success:function(e){
+										layer.closeAll();
+										layer.msg(e.msg);
+										if(e.code==0){
+											setTimeout(function(){							
+												window.location.href='/admin/book/doc_add?id='+e.data;
+											},1000)
+										}
+									}
+								})			
+							}
+						})	
+					}
+				}
+				else{
+					layer.msg('请选择类型');
+					return false;
+				}
+			}
+		})	
+	}
+   
+    //监听提交
+    form.on('submit(webform)', function (data) {
+		console.log(data.field);
+		//return false;
+		$.ajax({
+			url: "/admin/book/doc_add",
+			type: 'post',
+			data: data.field,
+			success: function (e) {
+				if (e.code == 0) {
+					layer.confirm('保存成功,返回列表页吗?', { icon: 3, title: '提示' }, function (index) {
+						window.location.href='/admin/book/view?id='+book_id;
+						layer.close(index);
+					});
+				} else {
+					layer.msg(e.msg);
+				}
+			}
+		})
+		return false;
+    });
+    //监听返回
+    $('.body-table').on('click', '[lay-event="back"]', function () {
+		window.location.href='/admin/book/view?id='+book_id;
+		return false;
+    });
+  }
+
+</script>
+{include file="common/layui" base='base' extend="[]" callback="init" /}
+{eq name="$detail.type" value="1"}
+{include file="common/mdeditor" id="docContent" markdown="mdContent" sub="84" toolbar="[]" /}
+{/eq}
+{/block}
+<!-- /脚本 -->

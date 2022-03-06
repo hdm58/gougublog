@@ -1,0 +1,269 @@
+{extend name="common/base"/}
+<!-- 主体 -->
+{block name="body"}
+<div class="layui-form body-table">
+	<div class="layui-form-bar" style="padding-bottom:0">
+		<h3 class="h3-title">{$detail.title}</h3>
+	</div>
+	<table class="layui-table">
+		<tr>
+			<td class="layui-td-gray">文档数</td>
+			<td style="width:50%">{$detail.count}</td>
+			<td class="layui-td-gray">排序</td>
+			<td>{$detail.sort}</td>
+			<td class="layui-td-gray2">是否首页显示</td>
+			<td>
+			  {eq name="$detail.is_index" value="1"}是{/eq}
+			  {eq name="$detail.is_index" value="2"}否{/eq}
+			</td>
+			<td class="layui-td-gray" rowspan="2">封面图</td>
+			<td rowspan="2" style="width:200px"><img src="{$detail.thumb}" style="max-width: 100%; height:100px;" /></td>
+		</tr>
+		<tr>
+			<td class="layui-td-gray">知识库描述</td>
+			<td colspan="5">{$detail.desc}</td>
+		</tr>
+	</table>
+	<div class="layui-btn-container" style="padding:12px 12px 0; border-left:1px solid #eee; border-right:1px solid #eee;">
+		<input type="hidden" name="book_id" value="{$detail.id}">
+		<button class="layui-btn layui-btn-normal layui-btn-sm add-doc" title="添加一级目录">+ 添加一级目录</button>
+		<button class="layui-btn layui-btn-primary layui-btn-sm close-doc">关闭</button>
+	</div>
+	<table class="layui-hide" id="treeTable" lay-filter="treeTable"></table>
+</div>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	function init(layui){
+		var TAB = parent.layui.tab;
+		var table=layui.table;
+		var treeGrid = layui.treeGrid;
+		var tableId='treeTable'
+		var layer=layui.layer;
+		var ptable=treeGrid.render({
+			id:tableId
+			,elem: '#'+tableId
+			,idField:'id'
+			,url:'/admin/book/view'
+			,cellMinWidth: 80
+			,treeId:'id'//树形id字段名称
+			,treeUpId:'pid'//树形父id字段名称
+			,treeShowName:'title'//以树形式显示的字段
+			,heightRemove:[".dHead", 175]//不计算的高度,表格设定的是固定高度，此项不生效
+			,height:'100%'
+			,isFilter:false
+			,iconOpen:false//是否显示图标【默认显示】
+			,isOpenDefault:true//节点默认是展开还是折叠【默认展开】
+			,loading:true
+			,isPage:false
+			,where:{id:$('[name="book_id"]').val()}
+			,cols: [[
+				{field:'id',width:80, title: 'ID号', align:'center'}
+				,{field: 'sort', title: '排序', edit: "text", align:'center', style:'cursor: pointer;', width:80}
+				,{field:'type', title: '类型',width:80,align:'center',templet: function(d){
+					var html='';
+					if(d.type==1){
+						html='文档';
+					}
+					else if(d.type==2){
+						html='分组';
+					}
+					if(d.type==3){
+						html='链接';
+					}
+					return html;
+				}}
+				,{field:'pid', title: '父级ID', edit:"text",width:80, align:'center'}
+				,{field:'title', edit:'text',title: '章节名称'}
+				,{field: 'read',title: '查看',align: 'center',width: 80}
+				,{width:166,title: '操作', align:'center',templet: function(d){
+						var html='<span class="layui-btn-group">';
+						html+='<a class="layui-btn layui-btn-normal layui-btn-xs" title="新建子节点" lay-event="add">新建子节点</a>';
+						html+='<a class="layui-btn layui-btn-xs" title="编辑" href="/admin/book/doc_add?id='+d.id+'">编辑</a>';
+						html+='<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>';
+						html+='</span>';
+						return html;
+					}
+				}
+			]]
+		});
+		//单元格编辑
+		treeGrid.on('edit('+tableId+')', function(obj){
+			layer.confirm('确定要提交修改吗?', {icon: 3, title:'提示'}, function(index){
+				let editData={};
+				editData['id'] = obj.data.id;
+				editData[obj.field] = obj.value;
+				$.ajax({
+				  url:"/admin/book/doc_add",
+				  type:'post',
+				  data:editData,
+				  success:function(e){
+					layer.msg(e.msg);
+					if(e.code == 0){
+						setTimeout(function(){							
+							treeGrid.reload(tableId,{
+								page:{
+									curr:1
+								}
+							});
+						},1000)						  
+					}
+				  }
+				}) 
+				layer.close(index);
+			});
+		});
+		//删除
+		treeGrid.on('tool('+tableId+')',function (obj) {
+			if(obj.event === 'del'){
+				layer.confirm('确定要删除吗?', {icon: 3, title:'提示'}, function(index){
+					$.ajax({
+					  url:"/admin/book/doc_delete",
+					  type:'post',
+					  data:{id:obj.data.id},
+					  success:function(e){
+						layer.msg(e.msg);
+						if(e.code == 0){
+							obj.del();
+						}
+					  }
+					}) 
+					layer.close(index);
+				});
+			}else if(obj.event==="add"){
+				//console.log(obj.data.id);
+				add(obj.data.id);
+			}
+		});
+			
+		//关闭
+		$('.close-doc').on('click', function () {
+			TAB.sonDelete();
+			return false;
+		});
+		
+		$('.add-doc').on('click',function(){
+			add(0);
+		});
+			
+		//添加
+		var selectTable=null;
+		function add(pid) {
+			var type=[{'id':1,'title':'新建文档'},{'id':2,'title':'新建分组'},{'id':3,'title':'新建链接'}];
+			layer.open({
+				title:'选择节点类型',
+				type:1,
+				area:['360px','300px'],
+				content:'<div style="width:328px; padding:15px 15px 0"><div id="selectType"></div></div>',
+				success:function(){
+					selectTable=table.render({
+						elem: '#selectType',
+						cols: [[ //标题栏
+							{type:'radio',title: '选择'},
+							{field: 'title', title: '节点类型'}
+						]],
+						data: type
+					  });			
+				},
+				btn:['确定'],
+				btnAlign:'c',
+				yes: function(idx){
+					var checkStatus = table.checkStatus(selectTable.config.id);
+					var data = checkStatus.data;
+					if(data.length>0){
+						if(data[0].id==1 || data[0].id==2){
+							layer.prompt({title: '标题', formType: 3,value :''}, function(text, index){
+								if(text == ''){
+									layer.msg('输入标题');
+									return false;
+								}
+								$.ajax({
+									url:"/admin/book/doc_add",
+									data:{book_id:$('[name="book_id"]').val(),pid:pid,type:data[0].id,title:text},
+									success:function(res){
+										layer.closeAll();
+										layer.msg(res.msg);
+										if(res.code==0){
+											setTimeout(function(){							
+												if(data[0].id==2){
+													treeGrid.reload(tableId,{
+														page:{curr:1}
+													});
+												}
+												if(data[0].id==1){
+													window.location.href='/admin/book/doc_add?id='+res.data;
+												}
+											},1000)												
+										}
+									}
+								})									
+							})
+						}else if(data[0].id==3){
+							var content='<div style="padding:0 15px;"><table class="layui-table">\
+								<tr>\
+									<td class="layui-td-gray">链接标题 <span style="color: red">*</span></td>\
+									<td><input name="title" id="docTitle" class="layui-input" value="" placeholder="请输入标题"></td>\
+								</tr>\
+								<tr>\
+									<td class="layui-td-gray">URL链接 <span style="color: red">*</span></td>\
+									<td><input name="link" id="docLink" class="layui-input" value="" placeholder="请输入链接"></td>\
+								</tr>\
+							</table></div>';
+							layer.open({
+								type:1,
+								title:'新建链接',
+								area:['480px','300px'],
+								content:content,
+								success:function(){
+									
+								},
+								btn: ['确定提交'],
+								btnAlign:'c',
+								yes: function(idx){
+									let docTitle = $('#docTitle').val();
+									let docLink = $('#docLink').val();
+									if(docTitle==''){
+										layer.msg('请输入标题');
+										return;
+									}
+									if(docLink==''){
+										layer.msg('请输入链接');
+										return;
+									}
+									$.ajax({
+										url:"/admin/book/doc_add",
+										data:{book_id:$('[name="book_id"]').val(),pid:pid,type:data[0].id,title:docTitle,link:docLink},
+										success:function(e){
+											layer.msg(e.msg);
+											if(e.code==0){
+												layer.closeAll();
+												setTimeout(function(){							
+													treeGrid.reload(tableId,{
+														page:{
+															curr:1
+														}
+													});
+												},1000)	
+											}
+										}
+									})			
+								}
+							})	
+						}
+					}
+					else{
+						layer.msg('请选择节点类型');
+						return false;
+					}
+				}
+			})	
+		}
+	}	
+</script>
+{include file="common/layui" base="base" extend="['treeGrid']" callback="init" /}
+{/block}
+<!-- /脚本 -->

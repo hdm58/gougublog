@@ -1,0 +1,187 @@
+{extend name="common/base"/}
+<!-- 主体 -->
+{block name="body"}
+<style>
+	.content-face span{padding: 5px 0; width: 36px; text-align: center; display: inline-block; cursor: pointer; font-size: 20px;}
+</style>
+<div class="body-table">
+	<form class="layui-form layui-form-bar">
+		<input type="text" name="keywords" placeholder="ID/内容" class="layui-input" autocomplete="off" style="max-width: 320px;display: inline;margin: -10px 10px 0 0;" />
+		<button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="webform">提交搜索</button>
+	</form>
+
+	<table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+
+<script type="text/html" id="status">
+	<i class="layui-icon {{#  if(d.status == 1){ }}layui-icon-ok{{#  } else { }}layui-icon-close{{#  } }}"></i>
+</script>
+<script type="text/html" id="is_home">
+	<i class="layui-icon {{#  if(d.is_home == 1){ }}layui-icon-ok{{#  } else { }}layui-icon-close{{#  } }}"></i>
+</script>
+<script type="text/html" id="toolbarDemo">
+	<div class="layui-btn-container">
+    <a class="layui-btn layui-btn-normal layui-btn-sm" data-event="add" title="添加动态">添加动态</a>
+  </div>
+</script>
+<script type="text/html" id="barDemo">
+	<div class="layui-btn-group"><a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a><a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a></div>
+</script>
+{/block}
+<!-- /主体 -->
+
+<!-- 脚本 -->
+{block name="script"}
+<script>
+	function init(layui) {
+		var table = layui.table,
+			form = layui.form;
+
+		var tableIns = table.render({
+			elem: '#test',
+			title: '动态列表',
+			toolbar: '#toolbarDemo',
+			url: '/admin/action/index', //数据接口
+			page: true, //开启分页
+			limit: 20,
+			cols: [
+				[ //表头
+					{
+						field: 'id',
+						title: '编号',
+						align: 'center',
+						width: 80
+					}, {
+						field: 'content',
+						title: '内容',
+					}, {
+						field: 'status',
+						title: '状态',
+						toolbar: '#status',
+						align: 'center',
+						width: 66
+					}, {
+						field: 'right',
+						title: '操作',
+						toolbar: '#barDemo',
+						width: 100,
+						align: 'center'
+					}
+				]
+			]
+		});
+
+		//监听行工具事件
+		table.on('tool(test)', function(obj) {
+			var data = obj.data;
+			if (obj.event === 'del') {
+				layer.confirm('确定要删除吗?', {
+					icon: 3,
+					title: '提示'
+				}, function(index) {
+					$.ajax({
+						url: "/admin/action/delete",
+						data: {
+							id: data.id
+						},
+						success: function(e) {
+							layer.msg(e.msg);
+							if (e.code == 0) {
+								obj.del();
+							}
+						}
+					})
+					layer.close(index);
+				});
+			}
+			else if (obj.event === 'edit') {
+				$.ajax({
+					url: "/admin/action/view",
+					data: {
+						id: data.id
+					},
+					success: function(e) {
+						if (e.code == 0) {
+							console.log(e);
+							addAction(e.data);
+						}
+						else{
+							layer.msg(e.msg);
+						}
+					}
+				})
+			}
+		});
+
+		//监听搜索提交
+		form.on('submit(webform)', function(data) {
+			tableIns.reload({
+				where: {
+					keywords: data.field.keywords
+				},
+				page: {
+					curr: 1
+				}
+			});
+			return false;
+		});
+
+		$('.body-table').on('click','[data-event="add"]',function(){
+			var data = {id:0,content:''};
+			addAction(data);		
+		});
+		var face = [
+			'💪','✌','👌','👍','✊','👊','👏','🙏','👮','🙎','🌞','🌙','🔥','👀','🚀','🎈','🎀','🎁','💋','🔴','💖','❤️','🍉','🍊','🥭','🍎','🍑','🍓','🌹','🍀','🏆','⚽','⚾','🏀','🏡','🏬','🏰','🚌','🚐','🈶','🉐','🈵','🆗','📢','🕘','✏️','💳','💰','📙','📆','✔️','❌','⭐','☁️','⛅','⛈️','🌤️','🌧️','🌩️','🌪️','😀','😁','😂','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','😇','😐','😶','😏','😣','😥','😮','😪','😫','😴','😛','😒','😓','😕','😷','😤','😢','😭','😨','😬','😰','😱','😳','😵','😡'];
+		function addAction(data){
+			var faceStr='';
+			for(var i=0; i<face.length;i++){
+				faceStr+= '<span>'+face[i]+'</span>';
+			}
+			var content='<form class="layui-form" style="width:750px"><div style="padding:10px 15px">\
+							<input name="id" type="hidden" value="'+data.id+'"/><textarea name="content" class="layui-textarea" style="height:116px;">'+data.content+'</textarea>\
+							<div class="content-face">'+faceStr+'</div>\
+							</div>\
+						</form>';
+			layer.open({
+				type:1,
+				title:'添加动态',
+				area:['752px','432px'],
+				content:content,
+				btnAlign: 'c',
+				btn: ['提交保存'],
+				success:function(){
+					$('.content-face').on('click','span',function(){
+						var txt = $(this).html();
+						var val=$('[name="content"]').val();
+						$('[name="content"]').val(val+txt);
+					})
+				},
+				yes: function(idx){
+					var id = $('[name="id"]').val();
+					var content = $('[name="content"]').val();
+					if(content==''){
+						layer.msg('请填写动态内容');
+						return;
+					}
+					$.ajax({
+						url:"/admin/action/add",
+						type:'post',
+						data:{id:id,content:content},
+						success:function(e){
+							layer.msg(e.msg);
+							if(e.code == 0){								
+								layer.close(idx);								
+								setTimeout(function(){
+									window.location.reload();
+								},1000)	
+							}
+						}
+					})			
+				}
+			})	
+		}
+	}
+</script>
+{include file="common/layui" base='base' extend="[]" callback="init" /}
+{/block}
+<!-- /脚本 -->
